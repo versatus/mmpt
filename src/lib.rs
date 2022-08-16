@@ -60,10 +60,17 @@ mod tests {
         assert!(node.is_fork());
         match node {
             Node::Fork { fork, .. } => { 
-                let fork_leaf_1 = fork.get_next().get(&0);
-                let fork_leaf_2 = fork.get_next().get(&1);
+                let fork_leaf_1 = fork.get(&0);
+                let fork_leaf_2 = fork.get(&1);
                 assert!(fork_leaf_1.is_data());
                 assert!(fork_leaf_2.is_data());
+                if let Node::Data { data, .. } = fork_leaf_1 {
+                    assert_eq!(leaf_1, data);
+                }
+                
+                if let Node::Data { data, .. } = fork_leaf_2 {
+                    assert_eq!(leaf_2, data);
+                }
             }
             _ => { panic!("Wrong node type")}
         }

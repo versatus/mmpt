@@ -2,6 +2,7 @@ use crate::node::{Nibble, Node, Root, Leaf};
 use std::error::Error;
 use std::fmt::Display;
 use std::fmt::Debug;
+use std::cmp::{PartialEq, Eq};
 
 #[derive(Debug)]
 pub struct InvalidInsertError;
@@ -128,7 +129,7 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Trie<P> {
     }
 
     pub fn get(&self, nibble: &u8) -> Node<P> {
-        self.root.get_next().get(nibble)
+        self.root.get(nibble)
     }
 }
 
@@ -137,3 +138,15 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Default for Trie<P> {
         Self::new()
     }
 }
+
+impl<P: Clone + Debug + Into<Vec<u8>>> PartialEq for Trie<P> {
+    fn eq(&self, other: &Trie<P>) -> bool {
+        self.root.eq(&other.root)
+    }
+
+    fn ne(&self, other: &Trie<P>) -> bool {
+        self.root.ne(&other.root)
+    }
+}
+
+impl<P: Clone + Debug + Into<Vec<u8>>> Eq for Trie<P> { }
