@@ -1,4 +1,5 @@
-use crate::node::{Nibble, Node, Root, Leaf};
+use crate::node::{Nibble, Node, Root, Leaf, Branch};
+use crate::layer::Layer;
 use std::error::Error;
 use std::fmt::Display;
 use std::fmt::Debug;
@@ -25,6 +26,16 @@ where
     P: Clone + Debug + Into<Vec<u8>>
 {
     pub root: Box<Root<P>>,
+}
+
+pub struct TrieIterator<P> 
+where
+    P: Clone + Debug + Into<Vec<u8>>
+{
+    branch: Branch<P>,
+    layer: Layer,
+    index: u8,
+
 }
 
 impl<P: Clone + Debug + Into<Vec<u8>>> Trie<P> {
