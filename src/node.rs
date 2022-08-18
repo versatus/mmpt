@@ -194,6 +194,7 @@ where
 
 /// A type that implements Iterator for a Branch Node
 /// So that the Nodes in the Branch can be iterated over.
+#[derive(Clone, Debug)]
 pub struct BranchIntoIter<P>
 where
     P: Clone + Debug + Into<Vec<u8>>,
@@ -204,7 +205,8 @@ where
 }
 
 /// A Type that implements Iterator for a borrowed and mutably borrowed
-/// Branch. 
+/// Branch.
+#[derive(Clone, Debug)]
 pub struct BranchIterator<'a, P>
 where
     P: Clone + Debug + Into<Vec<u8>>,
@@ -214,6 +216,7 @@ where
     index: u8,
 }
 
+#[derive(Clone, Debug)]
 pub struct ForkIntoIterator<P> 
 where
     P: Clone + Debug + Into<Vec<u8>>
@@ -223,6 +226,7 @@ where
     index: u8,
 }
 
+#[derive(Clone, Debug)]
 pub struct ForkIterator<'a, P> 
 where
     P: Clone + Debug + Into<Vec<u8>>
@@ -647,6 +651,7 @@ impl<'a, P: Clone + Debug + Into<Vec<u8>>> Iterator for BranchIterator<'a, P> {
         if let None = self.index.checked_add(1) {
             return None;
         } else {
+            self.index += 1;
             return Some(self.branch.nibbles[self.index as usize].clone());
         }
     }
@@ -660,6 +665,7 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Iterator for BranchIntoIter<P> {
         if let None = self.index.checked_add(1) {
             return None;
         } else {
+            self.index += 1;
             return Some(self.branch.nibbles[self.index as usize].clone());
         }
     }

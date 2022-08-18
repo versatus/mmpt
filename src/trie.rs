@@ -1,4 +1,4 @@
-use crate::node::{Nibble, Node, Root, Leaf, Branch};
+use crate::node::{Nibble, Node, Root, Leaf, BranchIntoIter};
 use crate::layer::Layer;
 use std::error::Error;
 use std::fmt::Display;
@@ -28,15 +28,26 @@ where
     pub root: Box<Root<P>>,
 }
 
-pub struct TrieIterator<P> 
+#[derive(Clone, Debug)]
+pub struct TrieIntoIter<P> 
 where
     P: Clone + Debug + Into<Vec<u8>>
 {
-    branch: Branch<P>,
+    curr_branch: BranchIntoIter<P>,
     layer: Layer,
-    index: u8,
+    branches: Vec<BranchIntoIter<P>>,
 
 }
+
+// TODO: Implement IntoIterator and Iterator for "borrowed" & mutably "borrowed" Tries.
+// pub struct TrieIterator<P> 
+// where
+//     P: Clone + Debug + Into<Vec<u8>>
+// {
+//     branch: Branch<P>,
+//     layer: Layer,
+//     layer_indices: [u8; 32],
+// }
 
 impl<P: Clone + Debug + Into<Vec<u8>>> Trie<P> {
     /// Creates a new blank trie with a Root (which is initialized with
@@ -161,3 +172,47 @@ impl<P: Clone + Debug + Into<Vec<u8>>> PartialEq for Trie<P> {
 }
 
 impl<P: Clone + Debug + Into<Vec<u8>>> Eq for Trie<P> { }
+
+impl<P: Clone + Debug + Into<Vec<u8>>> IntoIterator for Trie<P> {
+    type Item = Node<P>;
+    type IntoIter = TrieIntoIter<P>;
+    
+    fn into_iter(self) -> Self::IntoIter {
+        let layer = self.root.get_next().get_layer();
+        TrieIntoIter {
+            curr_branch: self.root.get_next().into_iter(),
+            layer: layer.into(),
+            branches: vec![self.root.get_next().into_iter()],
+        }
+    }
+}
+
+impl<P: Clone + Debug + Into<Vec<u8>>> Iterator for TrieIntoIter<P> {
+    type Item = Node<P>;
+    fn next(&mut self) -> Option<Node<P>> {
+        while let Some(node) = self.curr_branch.next() {
+            match node.clone() {
+                Node::Data { .. } => { return Some(node) },
+                Node::Fork { fork, .. } => {
+                    self.branches.push(fork.get_next().into_iter());
+                    self.curr_branch = fork.get_next().into_iter();
+                    let mut layer: u8 = self.layer.clone().into();
+                    layer += 1;
+                    self.layer = layer.into();
+                }
+                Node::None => { self.next(); }
+
+            }
+        }
+        if self.layer.clone() as u8 == 0u8 {
+            return None
+        } else {
+            let mut layer = self.layer.clone() as u8;
+            layer -= 1;
+            self.layer = layer.into();
+            self.curr_branch = self.branches[self.layer.clone() as usize].clone();
+            self.branches.pop();
+            self.next()
+        }
+    }        
+}
