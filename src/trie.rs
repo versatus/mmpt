@@ -187,6 +187,8 @@ impl<P: Clone + Debug + Into<Vec<u8>>> IntoIterator for Trie<P> {
     }
 }
 
+/// Implements basic, and necessary Iterator methods for TrieIntoIter<P> struct.
+/// This allows us to recursively search for Data Nodes in the Trie.
 impl<P: Clone + Debug + Into<Vec<u8>>> Iterator for TrieIntoIter<P> {
     type Item = Node<P>;
     fn next(&mut self) -> Option<Node<P>> {
@@ -214,5 +216,36 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Iterator for TrieIntoIter<P> {
             self.branches.pop();
             self.next()
         }
-    }        
+    }
+    // TODO: Implement other Iterator methods for trie.        
 }
+
+impl<P: Clone + Debug + Into<Vec<u8>>> DoubleEndedIterator for TrieIntoIter<P> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        while let Some(node) = self.curr_branch.next_back() {
+            match node.clone() {
+                Node::Data { .. } => { return Some(node) }
+                Node::Fork { fork, .. } => {
+                    self.branches.push(fork.get_next().into_iter());
+                    self.curr_branch = fork.get_next().into_iter();
+                    let mut layer: u8 = self.layer.clone().into();
+                    layer += 1;
+                    self.layer = layer.into();
+                }
+                Node::None => { self.next_back(); }
+            }
+        }
+        if self.layer.clone() as u8 == 0u8 {
+            return None
+        } else {
+            let mut layer = self.layer.clone() as u8;
+            layer -= 1;
+            self.layer = layer.into();
+            self.curr_branch = self.branches[self.layer.clone() as usize].clone();
+            self.branches.pop();
+            self.next_back()
+        }
+    }
+}
+
+//TODO: Implement "Extend", "FromIterator", "ExactSizeIterator" for Trie

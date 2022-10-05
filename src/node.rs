@@ -1,7 +1,8 @@
+
 #![allow(unused)]
 use crate::hash::{Hasher, Sha256Algorithm};
 use crate::layer::Layer;
-use core::iter::Iterator;
+pub use std::iter::{Iterator, DoubleEndedIterator, Rev};
 use std::cmp::{Eq, PartialEq};
 use std::error::Error;
 use std::fmt::Debug;
@@ -216,26 +217,6 @@ where
     index: u8,
 }
 
-#[derive(Clone, Debug)]
-pub struct ForkIntoIterator<P> 
-where
-    P: Clone + Debug + Into<Vec<u8>>
-{
-    fork: Fork<P>,
-    nibble: Nibble,
-    index: u8,
-}
-
-#[derive(Clone, Debug)]
-pub struct ForkIterator<'a, P> 
-where
-    P: Clone + Debug + Into<Vec<u8>>
-{
-    fork: &'a Fork<P>,
-    nibble: Nibble,
-    index: u8
-}
-
 impl<P: Clone + Debug + Into<Vec<u8>>> Root<P> {
     /// Generates a new, empty `Root`, i.e. a `Root` with a `next` that
     /// has a `nibbles` field containing 256 `Node::None`. This method
@@ -352,6 +333,13 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Branch<P> {
     pub fn get_hash(&self) -> RootHash {
         self.hash
     }
+
+    /// Reverses the order of the nodes. Returns a cloned version so original stays in correct order
+    pub fn reverse_nibbles(&self) -> Branch<P> {
+        let mut rev_branch = self.clone();
+        rev_branch.nibbles.reverse();
+        rev_branch
+    } 
 
     /// Get's all the not-None Nodes from the branch, concatenates their hashes
     /// in order of their index, and hashes the concatenated hash.
@@ -668,5 +656,38 @@ impl<P: Clone + Debug + Into<Vec<u8>>> Iterator for BranchIntoIter<P> {
             self.index += 1;
             return Some(self.branch.nibbles[self.index as usize].clone());
         }
+    }
+}
+
+/// Converts a Fork into a BranchIntoIterator type
+impl<P: Clone + Debug + Into<Vec<u8>>> IntoIterator for Fork<P> {
+    type Item = Node<P>;
+    type IntoIter = BranchIntoIter<P>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let layer = self.get_next().get_layer().clone();
+        BranchIntoIter {
+            branch: self.into(),
+            layer: layer.into(),
+            index: 0u8,
+        }
+    }
+}
+
+/// Convert Fork into the branch underpinning it.
+impl<P: Clone + Debug + Into<Vec<u8>>> From<Fork<P>> for Branch<P> {
+    fn from(i: Fork<P>) -> Branch<P> {
+        i.get_next().clone()
+    }
+}
+
+impl<P: Clone + Debug + Into<Vec<u8>>> DoubleEndedIterator for BranchIntoIter<P> {
+    
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if let 0u8 = self.index {
+            self.branch = self.branch.reverse_nibbles();
+        }
+
+        self.next()
     }
 }

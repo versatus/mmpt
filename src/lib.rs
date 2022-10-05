@@ -78,7 +78,42 @@ mod tests {
     }
 
     #[test]
-    fn traverse_trie_to_find_node() {
+    fn traverse_trie_to_find_node_that_exists_returns_the_node() {
+
+    }
+
+    #[test]
+    fn traverse_trie_to_find_node_that_doesnt_exist_returns_none_node() {
+
+    }
+
+    #[test]
+    fn traverse_trie_to_find_node_ending_with_shared_nibble_returns_fork() {
+
+    }
+
+    #[test]
+    fn next_on_trie_iterator_of_empty_returns_none() {
+
+    }
+
+    #[test]
+    fn next_on_trie_iterator_at_end_of_branch_moves_up_one_layer() {
+
+    }
+
+    #[test]
+    fn next_on_trie_iterator_at_fork_moves_down_one_layer() {
+
+    }
+
+    #[test]
+    fn calling_count_on_trie_iterator_returns_count_of_all_data_nodes_in_trie() {
+
+    }
+
+    #[test]
+    fn calling_count_on_branch_iterator_returns_count_of_all_data_nodes_in_branch_and_all_data_nodes_in_all_forks_in_branch() {
 
     }
 }
